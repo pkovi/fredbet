@@ -1,0 +1,47 @@
+version: "3"
+
+services:
+    mariadb:
+#      image: mariadb:10.1.11
+      image: mariadb:10.1.34
+      restart: unless-stopped
+      volumes:
+        - ~/mariadb:/var/lib/mysql
+      environment:
+       - MYSQL_DATABASE=fredbetdb
+       - MYSQL_ROOT_PASSWORD=secred
+       - MYSQL_USER=fred
+       - MYSQL_PASSWORD=fred
+      container_name: fredbet_mariadb
+
+    fredbet:
+#      image: fred4jupiter/fredbet:2.8.18
+#      image: fred4jupiter/fredbet:3.2.1
+      image: fred4jupiter/fredbet:3.3.3
+      restart: unless-stopped 
+      links:
+        - mariadb
+      depends_on:
+        - mariadb
+      ports:
+        - "8080:8080"
+      environment:
+       - SPRING_PROFILES_ACTIVE=maria
+       - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/fredbetdb
+       - SPRING_DATASOURCE_USERNAME=fred
+       - SPRING_DATASOURCE_PASSWORD=fred
+       - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.mariadb.jdbc.Driver
+       - FREDBET_IMAGE_LOCATION_FILE=FILE_SYSTEM
+       - FREDBET_IMAGE_FILE_SYSTEM_BASE_FOLDER=/home/fred/fredbet_images
+       - FREDBET_DEFAULT_LANGUAGE=en
+       - VIRTUAL_HOST=tips.ddnsfree.com
+       - LETSENCRYPT_HOST=tips.ddnsfree.com
+      volumes:
+       - "./fredbet_images:/home/fred/fredbet_images"
+       - "./logs:/logs"
+
+networks:
+  default:
+    external:
+      name: nginx-proxy
+
